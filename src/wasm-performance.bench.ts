@@ -25,22 +25,22 @@ describe("WASM vs JavaScript 性能测试", () => {
     }
   });
   
-  bench("JavaScript 字符串处理", () => {
+  bench("JavaScript String Processing", () => {
     jsStringProcessing(testInput);
   });
   
-  bench("WASM 字符串处理", () => {
+  bench("WASM String Processing", () => {
     wasmStringProcessing(testInput);
   });
   
   // 批量处理测试
-  bench("JavaScript 批量处理", () => {
+  bench("JavaScript Batch Processing", () => {
     for (let i = 0; i < 1000; i++) {
       jsStringProcessing(`World ${i}`);
     }
   });
   
-  bench("WASM 批量处理", () => {
+  bench("WASM Batch Processing", () => {
     for (let i = 0; i < 1000; i++) {
       wasmInstance.getHelloString();
     }
