@@ -1,0 +1,65 @@
+name: Build Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'pnpm'
+        
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: 3.1.45
+        
+    - name: Verify Emscripten
+      run: emcc --version
+      
+    - name: Build WASM module
+      run: |
+        chmod +x ./build-wasm.sh
+        ./build-wasm.sh
+        
+    - name: Verify build artifacts
+      run: |
+        ls -la src/wasm/
+        test -f src/wasm/hello.js && echo "✅ WASM JS wrapper found"
+        test -f src/wasm/hello.wasm && echo "✅ WASM binary found"
+        
+    - name: Build WASM module
+      run: |
+        chmod +x ./build-wasm.sh
+        ./build-wasm.sh
+        
+    - name: Run tests
+      run: pnpm test
+      
+    - name: Build production bundle
+      run: pnpm run build
+      
+    - name: Verify build output
+      run: |
+        ls -la dist/
+        test -f dist/index.html && echo "✅ HTML file found"
+        test -d dist/assets/ && echo "✅ Assets directory found"
+        ls -la dist/assets/ | grep -q '\.js$' && echo "✅ JS bundle found"
+        if ls -la dist/assets/ | grep -q '\.css$'; then echo "✅ CSS bundle found"; else echo "ℹ️  No CSS bundle found (may be inlined)"; fi

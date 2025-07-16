@@ -16,7 +16,9 @@ emcc src/hello.cpp \
     -s EXPORT_ES6=1 \
     -s MODULARIZE=1 \
     -s EXPORT_NAME="HelloModule" \
-    -s ENVIRONMENT="web" \
+    -s ENVIRONMENT="web,node" \
+    -s SINGLE_FILE=1 \
+    -s WASM_ASYNC_COMPILATION=0 \
     --bind \
     -O3
 

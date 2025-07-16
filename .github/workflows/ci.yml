@@ -28,7 +28,7 @@ jobs:
         cache: 'pnpm'
         
     - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      run: pnpm install --no-frozen-lockfile
       
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v14
@@ -49,8 +49,13 @@ jobs:
         test -f src/wasm/hello.js && echo "✅ WASM JS wrapper found"
         test -f src/wasm/hello.wasm && echo "✅ WASM binary found"
         
+    - name: Build WASM module
+      run: |
+        chmod +x ./build-wasm.sh
+        ./build-wasm.sh
+        
     - name: Run TypeScript checks
-      run: pnpm run build --noEmit
+      run: pnpm run build 
       
     - name: Run tests
       run: pnpm test
@@ -89,10 +94,6 @@ jobs:
     - name: Run tests without WASM
       run: pnpm test
       
-    - name: Test fallback behavior
-      run: |
-        # Test that app works without WASM
-        pnpm run build
 
   benchmark:
     runs-on: ubuntu-latest

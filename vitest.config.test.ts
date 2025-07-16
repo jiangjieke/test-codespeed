@@ -9,6 +9,12 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     deps: {
       inline: ['@testing-library/react']
+    },
+    typecheck: {
+      tsconfig: './tsconfig.test.json'
     }
+  },
+  define: {
+    global: 'globalThis',
   }
 })

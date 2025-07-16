@@ -29,13 +29,13 @@ describe('WASM Loading', () => {
       throw mockError
     } catch (error) {
       expect(error).toBe(mockError)
-      expect(error.message).toBe('Failed to load WASM')
+      expect((error as Error).message).toBe('Failed to load WASM')
     }
   })
 
   it('should have proper async behavior', async () => {
     // Test async loading behavior
-    const loadWASM = async () => {
+    const loadWASM = async (): Promise<{ getHelloString: () => string }> => {
       return new Promise((resolve) => {
         setTimeout(() => {
           resolve({ getHelloString: () => 'Async Hello' })
