@@ -45,4 +45,10 @@ describe("WASM vs JavaScript 性能测试", () => {
       wasmInstance.getHelloString();
     }
   });
+
+  bench("WASM Batch Processing - 2", () => {
+    for (let i = 0; i < 10000; i++) {
+      wasmInstance.getHelloString();
+    }
+  });
 });
