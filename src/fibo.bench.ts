@@ -14,4 +14,7 @@ describe("fibo", () => {
   bench("fibo 15", () => {
     fibonacci(15);
   });
+  bench("fibo 20", () => {
+    fibonacci(20);
+  });
 });
