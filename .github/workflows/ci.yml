@@ -1,0 +1,136 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+        
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+        
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: 3.1.45
+        
+    - name: Verify Emscripten
+      run: emcc --version
+      
+    - name: Build WASM module
+      run: |
+        chmod +x ./build-wasm.sh
+        ./build-wasm.sh
+        
+    - name: Check WASM artifacts
+      run: |
+        ls -la src/wasm/
+        test -f src/wasm/hello.js && echo "✅ WASM JS wrapper found"
+        test -f src/wasm/hello.wasm && echo "✅ WASM binary found"
+        
+    - name: Run TypeScript checks
+      run: pnpm run build --noEmit
+      
+    - name: Run tests
+      run: pnpm test
+      
+    - name: Build production bundle
+      run: pnpm run build
+      
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build-files-${{ matrix.node-version }}
+        path: |
+          dist/
+          src/wasm/
+        retention-days: 7
+
+  test-without-wasm:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'pnpm'
+        
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      
+    - name: Run tests without WASM
+      run: pnpm test
+      
+    - name: Test fallback behavior
+      run: |
+        # Test that app works without WASM
+        pnpm run build
+
+  benchmark:
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'pnpm'
+        
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: 3.1.45
+        
+    - name: Build WASM and run benchmarks
+      run: |
+        chmod +x ./build-wasm.sh
+        ./build-wasm.sh
+        pnpm run bench
+        
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v4
+      with:
+        name: benchmark-results
+        path: |
+          benchmark-results.json
+          *.bench-report
+        retention-days: 30
